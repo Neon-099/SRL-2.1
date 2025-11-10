@@ -98,6 +98,7 @@ function ShowQuestLog(): void {
 }
 
 addQuest("Rescue Villager", 230);
+addQuest("Quest testing", 40);
 completeQuestById(2);
 ShowQuestLog();
 console.log("Completed", getCompletedQuest());
