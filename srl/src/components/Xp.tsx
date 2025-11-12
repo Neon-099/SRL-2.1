@@ -54,6 +54,7 @@ export function getReward(chestType: reward) {
 
 type QuestStatus =  'Pending' |  'Completed' | 'Failed'
 
+
 interface Quests {
     id: number,
     title: string ,
