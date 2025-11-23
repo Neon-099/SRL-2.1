@@ -7,7 +7,7 @@ export interface Incident extends BaseModel {
     description: string
     photos?: string[]
     location: {lat: number, lng: number}
-    createAt: number
-    updateAt: number
+    createdAt: number
+    updatedAt: number
     synced: boolean
 }
