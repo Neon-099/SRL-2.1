@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { AnimatePresence, motion} from 'framer-motion';
 import { useIncidents } from "../../hooks/useIncident";
 
@@ -9,6 +9,7 @@ interface IncidentFormModalProps {
 
 export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) => {
     const { add } = useIncidents();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [form, setForm] = useState({
         title: '',
@@ -18,6 +19,33 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
         photos: [] as string[],
     });
 
+    useEffect(() => {
+        if (!isOpen) {
+            setForm({
+                title: '',
+                description: '',
+                locationLat: '',
+                locationLng: '',
+                photos: [],
+            });
+            setIsSubmitting(false);
+        }
+    }, [isOpen])
+
+    // Reset form when modal closes
+    const handleClose = () => {
+        if (!isSubmitting) {
+            setForm({
+                title: '',
+                description: '',
+                locationLat: '',
+                locationLng: '',
+                photos: [],
+            });
+            onClose();
+        }
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setForm(prev => ({ ...prev, [name]: value }));
@@ -25,9 +53,16 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
+        e.stopPropagation();    
+
+        // Prevent double submission
+        if (isSubmitting) {
+            console.warn('Form is already submitting, ignoring duplicate submission');
+            return;
+        }
 
         if (!form.title || !form.description || !form.locationLat || !form.locationLng) {
-            alert("Please fill in all required fields ")
+            alert("Please fill in all required fields");
             return;
         }
 
@@ -41,6 +76,7 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
             return;
         }
 
+        setIsSubmitting(true);
         try {
             console.log('Submitting incident with data:', {
                 type: 'incident',
@@ -61,7 +97,9 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
                 updateAt: Date.now(), 
                 version: 1,
             });
-                console.log('done adding')
+            
+            console.log('Incident added successfully');
+            
             // Reset form
             setForm({
                 title: '',
@@ -70,11 +108,14 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
                 locationLng: '',
                 photos: [],
             });
+            setIsSubmitting(false);
             onClose();
         } catch (error) {
             console.error('Error submitting form:', error);
-            alert('Failed to submit. Please try again.');
+            setIsSubmitting(false);
+            alert(`Failed to submit. ${error instanceof Error ? error.message : 'Unknown error'} Please try again.`);
         }
+        return false;
     };
 
     return (
@@ -87,7 +128,7 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            onClick={onClose}
+                            onClick={handleClose}
                         />
 
                         {/* MODAL */}
@@ -98,6 +139,7 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
                             initial={{ scale: 0.7, opacity: 0, y: 20 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.7, opacity: 0, y: 20 }}
+                            onClick={(e) => e.stopPropagation()}
                         >
                             <div>
                                 <div className="flex items-center gap-2 mb-4">
@@ -106,7 +148,7 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
                                     </h2>
                                 </div>
 
-                                <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+                                <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
                                     <div>
                                         <label htmlFor="title" className="text-gray-300 text-sm">
                                             Title <span className="text-red-400">*</span>
@@ -120,6 +162,7 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
                                             value={form.title}
                                             onChange={handleChange}
                                             required
+                                            disabled={isSubmitting}
                                             placeholder="Enter title"
                                         />
                                     </div>
@@ -137,6 +180,7 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
                                             onChange={handleChange}
                                             rows={4}
                                             required
+                                            disabled={isSubmitting}
                                             placeholder="Enter description"
                                         />
                                     </div>
@@ -156,6 +200,7 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
                                                 value={form.locationLat}
                                                 onChange={handleChange}
                                                 required
+                                                disabled={isSubmitting}
                                                 placeholder="0.0000"
                                             />
                                         </div>
@@ -174,6 +219,7 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
                                                 value={form.locationLng}
                                                 onChange={handleChange}
                                                 required
+                                                disabled={isSubmitting}
                                                 placeholder="0.0000"
                                             />
                                         </div>
@@ -190,6 +236,7 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
                                             className="w-full mt-1 p-2 rounded-md bg-black/40 border border-purple-500/40 text-white
                                                 focus:outline-none focus:border-purple-500/60"
                                             placeholder="url1, url2, url3"
+                                            disabled={isSubmitting}
                                             onChange={(e) => {
                                                 const urls = e.target.value
                                                     .split(',')
@@ -202,18 +249,20 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
 
                                     <div className='flex justify-end gap-2 mt-2'>
                                         <button
-                                            className='px-4 py-2 rounded-lg text-gray-300 bg-white/10 hover:bg-white/20 transition-colors'
-                                            onClick={onClose}
+                                            className='px-4 py-2 rounded-lg text-gray-300 bg-white/10 hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                                            onClick={handleClose}
                                             type='button'
+                                            disabled={isSubmitting}
                                         >
                                             Cancel
                                         </button>
                                         <button
-                                            className='px-4 py-2 rounded-lg text-white bg-purple-500/40 hover:bg-purple-500/60 
-                                                border border-purple-500/40 transition-colors'
+                                            className={`px-4 py-2 rounded-lg text-white bg-purple-500/40 hover:bg-purple-500/60 
+                                                border border-purple-500/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                                             type='submit'
+                                            disabled={isSubmitting}
                                         >
-                                            Submit
+                                            {isSubmitting ? 'Submitting...' : 'Submit'}
                                         </button>
                                     </div>
                                 </form>

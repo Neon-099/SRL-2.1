@@ -46,6 +46,7 @@ export const IncidentEditModal = ({ isOpen, onClose, incident }: IncidentReportE
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
+        e.stopPropagation(); //PREVENT EVENT BUBBLING
 
         if (!form.title || !form.description || !form.locationLat || !form.locationLng || !selectedType || !incident) {
             return;
@@ -158,7 +159,7 @@ export const IncidentEditModal = ({ isOpen, onClose, incident }: IncidentReportE
                                         Edit {selectedType === 'incident' ? 'Incident' : 'Report'}
                                     </h2>
 
-                                    <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+                                    <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
                                         <div>
                                             <label htmlFor="title" className="text-gray-300 text-sm">
                                                 Title <span className="text-red-400">*</span>
