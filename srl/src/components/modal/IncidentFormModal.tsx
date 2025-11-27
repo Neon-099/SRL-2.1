@@ -89,7 +89,7 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
             });
             
             await add({
-                type: 'incident', // Always set to 'incident'
+                entity: 'incident', // Always set to 'incident'
                 title: form.title,
                 description: form.description,
                 location,

@@ -10,7 +10,7 @@ interface IncidentReportEditModalProps {
 }
 
 export const IncidentEditModal = ({ isOpen, onClose, incident }: IncidentReportEditModalProps) => {
-    const [selectedType, setSelectedType] = useState<'incident' | 'report' | null>(null);
+    const [selectedType, setSelectedType] = useState<'incident' | 'task' | null>(null);
     const { update } = useIncidents();
 
     const [form, setForm] = useState({
@@ -24,7 +24,7 @@ export const IncidentEditModal = ({ isOpen, onClose, incident }: IncidentReportE
     // Populate form when incident changes or modal opens
     useEffect(() => {
         if (incident && isOpen) {
-            setSelectedType(incident.type);
+            setSelectedType(incident.entity);
             setForm({
                 title: incident.title,
                 description: incident.description,
@@ -40,7 +40,7 @@ export const IncidentEditModal = ({ isOpen, onClose, incident }: IncidentReportE
         setForm(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleTypeSelect = (type: 'incident' | 'report') => {
+    const handleTypeSelect = (type: 'incident' | 'task') => {
         setSelectedType(type);
     };
 
@@ -64,7 +64,7 @@ export const IncidentEditModal = ({ isOpen, onClose, incident }: IncidentReportE
 
         try {
             await update(incident.id, {
-                type: selectedType,
+                entity: selectedType,
                 title: form.title,
                 description: form.description,
                 location,
@@ -115,7 +115,7 @@ export const IncidentEditModal = ({ isOpen, onClose, incident }: IncidentReportE
                                             type="button"
                                             onClick={() => handleTypeSelect('incident')}
                                             className={`w-full p-4 rounded-lg border text-white font-semibold transition-all
-                                                ${selectedType === 'incident' || incident.type === 'incident'
+                                                ${selectedType === 'incident' || incident.entity === 'incident'
                                                     ? 'bg-red-500/30 border-red-500/60 shadow-[0_0_25px_rgba(239,68,68,0.5)]'
                                                     : 'bg-red-500/20 border-red-500/40 hover:bg-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.3)] hover:shadow-[0_0_25px_rgba(239,68,68,0.5)]'
                                                 }`}
@@ -123,21 +123,6 @@ export const IncidentEditModal = ({ isOpen, onClose, incident }: IncidentReportE
                                             <div className="text-lg">Incident</div>
                                             <div className="text-sm text-gray-300 mt-1">
                                                 Report an incident or issue
-                                            </div>
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => handleTypeSelect('report')}
-                                            className={`w-full p-4 rounded-lg border text-white font-semibold transition-all
-                                                ${selectedType === 'report' || incident.type === 'report'
-                                                    ? 'bg-blue-500/30 border-blue-500/60 shadow-[0_0_25px_rgba(59,130,246,0.5)]'
-                                                    : 'bg-blue-500/20 border-blue-500/40 hover:bg-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.3)] hover:shadow-[0_0_25px_rgba(59,130,246,0.5)]'
-                                                }`}
-                                        >
-                                            <div className="text-lg">Report</div>
-                                            <div className="text-sm text-gray-300 mt-1">
-                                                Submit a general report
                                             </div>
                                         </button>
                                     </div>
