@@ -64,7 +64,7 @@ export const IncidentEditModal = ({ isOpen, onClose, incident }: IncidentReportE
 
         try {
             await update(incident.id, {
-                entity: selectedType,
+                entity: 'incident',
                 title: form.title,
                 description: form.description,
                 location,

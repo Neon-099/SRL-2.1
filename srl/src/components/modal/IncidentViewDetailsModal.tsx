@@ -61,18 +61,18 @@ export const IncidentViewDetailsModal = ({ isOpen, onClose, incident }: Incident
                         >
                             {/* Header */}
                             <div className={`px-6 py-4 border-b ${
-                                incident.type === 'incident' 
+                                incident.entity === 'incident' 
                                     ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200' 
                                     : 'bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200'
                             }`}>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className={`p-3 rounded-lg ${
-                                            incident.type === 'incident'
+                                            incident.entity === 'incident'
                                                 ? 'bg-red-200'
                                                 : 'bg-blue-200'
                                         }`}>
-                                            {incident.type === 'incident' ? (
+                                            {incident.entity === 'incident' ? (
                                                 <AlertCircle className='w-6 h-6 text-red-700' />
                                             ) : (
                                                 <FileText className='w-6 h-6 text-blue-700' />
@@ -83,11 +83,11 @@ export const IncidentViewDetailsModal = ({ isOpen, onClose, incident }: Incident
                                                 {incident.title}
                                             </h2>
                                             <span className={`text-xs px-2 py-1 rounded-full font-semibold mt-1 inline-block ${
-                                                incident.type === 'incident'
+                                                incident.entity === 'incident'
                                                     ? 'bg-red-200 text-red-800'
                                                     : 'bg-blue-200 text-blue-800'
                                             }`}>
-                                                {incident.type === 'incident' ? 'Incident' : 'Report'}
+                                                {incident.entity === 'incident' ? 'Incident' : 'Report'}
                                             </span>
                                         </div>
                                     </div>
