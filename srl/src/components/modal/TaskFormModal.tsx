@@ -1,24 +1,23 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { AnimatePresence, motion} from 'framer-motion';
-import { useIncidents } from "../../hooks/useIncident";
-import { MapPin, Loader2} from 'lucide-react';
+import { useTasks } from "../../hooks/useTasks";
 
-interface IncidentFormModalProps {
+interface TaskFormModalProps {
     isOpen: boolean,   
     onClose: () => void
 }
 
-export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) => {
-    const { add } = useIncidents();
+export const TaskFormModal = ({ isOpen, onClose }: TaskFormModalProps) => {
+    const { add } = useTasks();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isGettingLocation, setIsGettingLocation] = useState(false);
 
     const [form, setForm] = useState({
         title: '',
         description: '',
+        assignedTo: '',
         locationLat: '',
         locationLng: '',
-        photos: [] as string[],
+        attachments: [] as string[],
     });
 
     useEffect(() => {
@@ -26,57 +25,14 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
             setForm({
                 title: '',
                 description: '',
+                assignedTo: '',
                 locationLat: '',
                 locationLng: '',
-                photos: [],
+                attachments: [],
             });
             setIsSubmitting(false);
         }
     }, [isOpen])
-
-    const handleGetCurrentLocation = () => {
-        if(!navigator.geolocation){
-            alert("Geolocation is not supported by your browser")
-        }
-
-        setIsGettingLocation(true);
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const { latitude, longitude} = position.coords;
-                setForm(prev => ({
-                    ...prev,
-                    locationLat: latitude.toFixed(6),
-                    locationLng: longitude.toFixed(6),
-                }));
-                setIsGettingLocation(false);
-                console.log("Location obtained", latitude, longitude);
-            },
-            (error) => {
-                setIsGettingLocation(false);
-                console.error('Error getting location:', error);
-                let errorMessage = 'Failed to get location. ';
-                switch(error.code) {
-                    case error.PERMISSION_DENIED:
-                        errorMessage += 'Please allow location access.';
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        errorMessage += 'Location information unavailable.';
-                        break;
-                    case error.TIMEOUT:
-                        errorMessage += 'Location request timed out.';
-                        break;
-                    default:
-                        errorMessage += 'An unknown error occurred.';
-                }
-                alert(errorMessage);
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 1000,
-                maximumAge: 0
-            }
-        )
-    }
 
     // Reset form when modal closes
     const handleClose = () => {
@@ -84,9 +40,10 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
             setForm({
                 title: '',
                 description: '',
+                assignedTo: '',
                 locationLat: '',
                 locationLng: '',
-                photos: [],
+                attachments: [],
             });
             onClose();
         }
@@ -107,7 +64,7 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
             return;
         }
 
-        if (!form.title || !form.description || !form.locationLat || !form.locationLng) {
+        if (!form.title || !form.description || !form.locationLat || !form.locationLng || !form.assignedTo) {
             alert("Please fill in all required fields");
             return;
         }
@@ -124,22 +81,25 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
 
         setIsSubmitting(true);
         try {
-            console.log('Submitting incident with data:', {
-                type: 'incident',
+            console.log('Submitting task with data:', {
+                type: 'task',
                 title: form.title,
                 description: form.description,
+                assignedTo: form.assignedTo,
                 location,
-                photos: form.photos.length > 0 ? form.photos : undefined,
+                attachments: form.attachments.length > 0 ? form.attachments : undefined,
                 updateAt: Date.now(),
                 version: 1,
             });
             
             await add({
-                entity: 'incident', // Always set to 'incident'
+                entity: 'task', 
+                status: 'Pending',
                 title: form.title,
                 description: form.description,
+                assignedTo: form.assignedTo,
                 location,
-                photos: form.photos.length > 0 ? form.photos : undefined,
+                attachments: form.attachments.length > 0 ? form.attachments : undefined,
                 updateAt: Date.now(), 
                 version: 1,
             });
@@ -150,9 +110,10 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
             setForm({
                 title: '',
                 description: '',
+                assignedTo: '',
                 locationLat: '',
                 locationLng: '',
-                photos: [],
+                attachments: [],
             });
             setIsSubmitting(false);
             onClose();
@@ -211,6 +172,23 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
                                             disabled={isSubmitting}
                                             placeholder="Enter title"
                                         />
+                                    </div>  
+                                     <div>
+                                        <label htmlFor="title" className="text-gray-300 text-sm">
+                                            AssignedTo <span className="text-red-400">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="assignedTo"
+                                            name="assignedTo"
+                                            className="w-full mt-1 p-2 rounded-md bg-black/40 border border-purple-500/40 text-white
+                                                focus:outline-none focus:border-purple-500/60"
+                                            value={form.assignedTo}
+                                            onChange={handleChange}
+                                            required
+                                            disabled={isSubmitting}
+                                            placeholder="Enter title"
+                                        />
                                     </div>
 
                                     <div>
@@ -231,77 +209,44 @@ export const IncidentFormModal = ({ isOpen, onClose }: IncidentFormModalProps) =
                                         />
                                     </div>
 
-                                     {/* ✅ UPDATED: Location section with Get Location button */}
-                                    <div>
-                                        <div className="flex items-center justify-between mb-2">
-                                            <label className="text-gray-300 text-sm">
-                                                Location <span className="text-red-400">*</span>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label htmlFor="locationLat" className="text-gray-300 text-sm">
+                                                Latitude <span className="text-red-400">*</span>
                                             </label>
-                                            <button
-                                                type="button"
-                                                onClick={handleGetCurrentLocation}
-                                                disabled={isGettingLocation || isSubmitting}
-                                                className="flex items-center gap-2 px-3 py-1.5 text-xs bg-purple-500/40 hover:bg-purple-500/60 
-                                                    border border-purple-500/40 rounded-lg text-white transition-colors 
-                                                    disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                {isGettingLocation ? (
-                                                    <>
-                                                        <Loader2 className='w-3 h-3 animate-spin' />
-                                                        <span>Getting Location...</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <MapPin className='w-3 h-3' />
-                                                        <span>Get Current Location</span>
-                                                    </>
-                                                )}
-                                            </button>
+                                            <input
+                                                type="number"
+                                                id="locationLat"
+                                                name="locationLat"
+                                                step="any"
+                                                className="w-full mt-1 p-2 rounded-md bg-black/40 border border-purple-500/40 text-white
+                                                    focus:outline-none focus:border-purple-500/60"
+                                                value={form.locationLat}
+                                                onChange={handleChange}
+                                                required
+                                                disabled={isSubmitting}
+                                                placeholder="0.0000"
+                                            />
                                         </div>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <label htmlFor="locationLat" className="text-gray-300 text-sm">
-                                                    Latitude <span className="text-red-400">*</span>
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    id="locationLat"
-                                                    name="locationLat"
-                                                    step="any"
-                                                    className="w-full mt-1 p-2 rounded-md bg-black/40 border border-purple-500/40 text-white
-                                                        focus:outline-none focus:border-purple-500/60"
-                                                    value={form.locationLat}
-                                                    onChange={handleChange}
-                                                    required
-                                                    disabled={isSubmitting}
-                                                    placeholder="0.000000"
-                                                />
-                                            </div>
 
-                                            <div>
-                                                <label htmlFor="locationLng" className="text-gray-300 text-sm">
-                                                    Longitude <span className="text-red-400">*</span>
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    id="locationLng"
-                                                    name="locationLng"
-                                                    step="any"
-                                                    className="w-full mt-1 p-2 rounded-md bg-black/40 border border-purple-500/40 text-white
-                                                        focus:outline-none focus:border-purple-500/60"
-                                                    value={form.locationLng}
-                                                    onChange={handleChange}
-                                                    required
-                                                    disabled={isSubmitting}
-                                                    placeholder="0.000000"
-                                                />
-                                            </div>
+                                        <div>
+                                            <label htmlFor="locationLng" className="text-gray-300 text-sm">
+                                                Longitude <span className="text-red-400">*</span>
+                                            </label>
+                                            <input
+                                                type="number"
+                                                id="locationLng"
+                                                name="locationLng"
+                                                step="any"
+                                                className="w-full mt-1 p-2 rounded-md bg-black/40 border border-purple-500/40 text-white
+                                                    focus:outline-none focus:border-purple-500/60"
+                                                value={form.locationLng}
+                                                onChange={handleChange}
+                                                required
+                                                disabled={isSubmitting}
+                                                placeholder="0.0000"
+                                            />
                                         </div>
-                                        {form.locationLat && form.locationLng && (
-                                            <p className="text-xs text-gray-400 mt-1">
-                                                📍 Location set: {form.locationLat}, {form.locationLng}
-                                            </p>
-                                        )}
                                     </div>
 
                                     <div>

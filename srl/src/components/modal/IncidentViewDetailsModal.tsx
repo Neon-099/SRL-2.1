@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import type { Incident } from '../../db/types/Incident';
-import { AlertCircle, FileText, MapPin, Calendar, Image as ImageIcon, X, Clock } from 'lucide-react';
+import { AlertCircle, FileText, MapPin, Calendar, Image as ImageIcon, X, Clock, ExternalLink} from 'lucide-react';
 
 
 interface IncidentViewDetailsModalProps {
@@ -36,6 +36,13 @@ export const IncidentViewDetailsModal = ({ isOpen, onClose, incident }: Incident
         if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
         return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
     };
+
+    // ✅ NEW: Generate map URLs
+    const googleMapsUrl = `https://www.google.com/maps?q=${incident.location.lat},${incident.location.lng}`;
+    const openStreetMapUrl = `https://www.openstreetmap.org/?mlat=${incident.location.lat}&mlon=${incident.location.lng}&zoom=15`;
+
+    // ✅ NEW: Generate embedded map iframe (using OpenStreetMap - no API key needed)
+    const mapEmbedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${incident.location.lng - 0.01},${incident.location.lat - 0.01},${incident.location.lng + 0.01},${incident.location.lat + 0.01}&layer=mapnik&marker=${incident.location.lat},${incident.location.lng}`;
 
     return (
         <div>
@@ -111,15 +118,59 @@ export const IncidentViewDetailsModal = ({ isOpen, onClose, incident }: Incident
                                 </div>
 
                                 {/* Location */}
-                                <div className="mb-6">
-                                    <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Location</h3>
-                                    <div className="flex items-center gap-2 text-gray-700">
+                                 {/* ✅ UPDATED: Location section with map */}
+                            <div className="mb-6">
+                                <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">Location</h3>
+                                
+                                {/* Map Display */}
+                                <div className="mb-3 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                                    <iframe
+                                        width="100%"
+                                        height="250"
+                                        frameBorder="0"
+                                        scrolling="no"
+                                        marginHeight={0}
+                                        marginWidth={0}
+                                        src={mapEmbedUrl}
+                                        className="w-full"
+                                        title="Incident Location Map"
+                                    />
+                                </div>
+
+                                {/* Coordinates and Links */}
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-lg">
                                         <MapPin className='w-5 h-5 text-gray-500' />
                                         <span className="font-mono text-sm">
                                             {incident.location.lat.toFixed(6)}, {incident.location.lng.toFixed(6)}
                                         </span>
                                     </div>
+                                    
+                                    {/* Map Links */}
+                                    <div className="flex gap-2">
+                                        <a
+                                            href={googleMapsUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-50 text-blue-700 
+                                                rounded-lg hover:bg-blue-100 transition-colors border border-blue-200"
+                                        >
+                                            <ExternalLink className='w-4 h-4' />
+                                            Open in Google Maps
+                                        </a>
+                                        <a
+                                            href={openStreetMapUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2 px-3 py-2 text-sm bg-green-50 text-green-700 
+                                                rounded-lg hover:bg-green-100 transition-colors border border-green-200"
+                                        >
+                                            <ExternalLink className='w-4 h-4' />
+                                            Open in OpenStreetMap
+                                        </a>
+                                    </div>
                                 </div>
+                            </div>
 
                                 {/* Photos */}
                                 {incident.photos && incident.photos.length > 0 && (
