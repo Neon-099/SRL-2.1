@@ -4,14 +4,14 @@ import { uuid } from '../utils/uuid';
 
 export async function addToSyncQueue(
     entity: "task" | 'incident',
-    type: 'CREATE' | 'UPDATE' | 'DELETE',
+    action: 'CREATE' | 'UPDATE' | 'DELETE',
     payload: any,
     version: number
     ) {
     const event: SyncEvent = {
         id: uuid(),
         entity,
-        type,
+        action,
         payload,
         version,
         timestamp: Date.now(),
