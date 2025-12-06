@@ -1,33 +1,55 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-generator client {
-  provider = "prisma-client-js"
-}
+//cuid()
+//The problem is that @db.ObjectId is a MongoDB-specific type annotation,
+//but your schema is using the default connector which doesn't support it. 
+//You should remove the @db.ObjectId annotation from the foreign key fields since the userId is already defined as a String.
 
 datasource db {
   provider = "mongodb"
-  url = env("DATABASE_URL")
 }
 
-// Example models - adjust based on your needs
+generator client {
+  provider = "prisma-client"
+  output = "../src/generated/prisma"
+}
+
+model User {
+  id        String   @id @default(cuid()) @map("_id")
+  email     String   @unique
+  password  String   // Hashed password
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  tasks     Task[]
+  incidents Incident[]
+  
+  @@map("users")
+}
+
+// Update existing models to link to User
 model Task {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String   @id @default(cuid()) @map("_id") 
   title     String
   completed Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  
   @@map("tasks")
 }
 
 model Incident {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String   @id @default(cuid()) @map("_id") 
   title       String
   description String?
   status      String   @default("open")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  
   @@map("incidents")
 }
