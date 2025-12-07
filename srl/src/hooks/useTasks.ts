@@ -1,27 +1,22 @@
-// import { validateIncident } from "../utils/validator";
-// import { Incident }from '../db/types/Incident'
-// import { IncidentManager }
-// import { uuid } from '../utils/uuid'
-
-
 import { useEffect, useState } from "react";
-import { Incident } from '../db/types/Incident'
-import { IncidentManager } from "../managers/IncidentManagers";
+import { Task } from '../db/types/Task'
+import { TaskManager } from "../managers/TaskManagers";
 
-export function useIncidents() {
-    const [incidents, setIncidents ] = useState<Incident[]>([]);
+export function useTasks() {
+    const [tasks, setTasks ] = useState<Task[]>([]);
     const [loading, setLoading] = useState(false);
-    
+
+    console.log('useTasks called', tasks)
     async function load() {
         setLoading(true);
         try {
             console.log('Loading incidents...');
-            const data = await IncidentManager.getAll();
+            const data = await TaskManager.getAll();
             console.log('Loaded incidents:', data.length);
-            setIncidents(data);
+            setTasks(data);
         } catch (error) {
             console.error('Error loading incidents:', error);
-            setIncidents([]);
+            setTasks([]);
         } finally {
             setLoading(false);
         }
@@ -31,28 +26,26 @@ export function useIncidents() {
         load()
     }, []);
 
-    async function add(data: Omit<Incident, 'id' | 'createdAt' | 'updatedAt' | 'synced'>) {
+    async function add(data: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'synced'>) {
         try {
             console.log('Adding incident:', data);
-            const newIncident = await IncidentManager.add(data);
-            setIncidents(prev => [...prev, newIncident]);
+            await TaskManager.add(data);
             console.log('Incident added, reloading...');
+            await load();
         } catch (error) {
             console.error('Error adding incident:', error);
-            await load();
             throw error;
         }
     }
 
-    async function update(id: string, payload: Partial<Incident>) {
+    async function update(id: string, payload: Partial<Task>) {
         try {
             console.log('Updating incident:', id, payload);
-            await IncidentManager.update(id, payload);
-            setIncidents(prev => prev.map(incidents => incidents.id === id ? { ...incidents, ...payload } : incidents))
+            await TaskManager.update(id, payload);
             console.log('Incident updated, reloading...');
+            await load();
         } catch (error) {
             console.error('Error updating incident:', error);
-            await load();
             throw error;
         }
     }
@@ -60,8 +53,7 @@ export function useIncidents() {
     async function remove(id: string) {
         try {
             console.log('Deleting incident:', id);
-            await IncidentManager.delete(id);
-            setIncidents(prev => prev.filter(incidents => incidents.id !== id));
+            await TaskManager.delete(id);
             console.log('Incident deleted, reloading...');
             await load();
         } catch (error) {
@@ -70,5 +62,5 @@ export function useIncidents() {
         }
     }
     
-    return { incidents, loading, add, update, deleted: remove }
+    return { tasks, loading, add, update, deleted: remove }
 }
